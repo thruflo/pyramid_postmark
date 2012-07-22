@@ -57,7 +57,8 @@ Or when calling `request.send_email`:
 
 # Tests
 
-Tested on python2.7.  Install `mock`, `nose` and `coverage` then e.g.:
+Tested on python2.7 only (as [python-postmark][] is not yet Python3 compatible).  
+Install `mock`, `nose` and `coverage` then e.g.:
 
     $ nosetests --with-coverage --with-doctest --cover-package pyramid_postmark pyramid_postmark
     ...
