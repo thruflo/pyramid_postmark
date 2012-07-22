@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Provide ``get_batch_mailer`` and ``get_send_email_function`` functions."""
+"""Provide ``get_mailer`` and ``get_send_email`` functions (designed to be
+  reified as ``request.mailer`` and ``request.send_email`` properties).
+"""
 
 import logging
 logger = logging.getLogger(__name__)
