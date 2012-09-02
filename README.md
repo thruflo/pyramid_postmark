@@ -55,6 +55,16 @@ Or when calling `request.send_email`:
 
     request.send_email(email, should_join_tx=False)
 
+If you're feeling optimisic, you can send the email in the background:
+
+    request.send_email(email, in_background=True)
+
+Note that background sending works whether you send immediately or wait for the
+current transaction to succeed.  i.e.: As and when the email is to be sent, it
+is send in a background thread using the following code:
+
+    do_send = thread_cls(target=mailer.send).start if in_background else mailer.send
+
 # Tests
 
 Tested on python2.7 only (as [python-postmark][] is not yet Python3 compatible).  
