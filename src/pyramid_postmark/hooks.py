@@ -1,18 +1,97 @@
 # -*- coding: utf-8 -*-
 
-"""Provide ``get_mailer`` and ``get_send_email`` functions (designed to be
-  reified as ``request.mailer`` and ``request.send_email`` properties).
+"""Provide ``get_mailer`` and ``send_email``, ``email_factory`` and
+  ``render_email`` request methods.
 """
+
+__all__ = [
+    'email_factory',
+    'render_email',
+    'get_mailer',
+    'send_email'
+]
 
 import logging
 logger = logging.getLogger(__name__)
 
 import threading
 
+from html2text import html2text
+from postmark import PMBatchMail
+from postmark import PMMail
+
+from pyramid.renderers import render as renderers_render_template
 from pyramid.settings import asbool
 
-from postmark import PMBatchMail
 from pyramid_weblayer import tx
+
+def email_factory(request, from_address, to_address, subject, body,
+        msg_cls=None, **kwargs):
+    """Instatiate an instance of ``postmark.PMMail``, where the strings provided
+      are encoded to utf-8 and stripped::
+      
+          >>> mock_request = None
+          >>> subject = u'Subject Line'
+          >>> body = u'<p>Boo</p>'
+          >>> kwargs = {}
+          >>> mail = email_factory(mock_request, u'from@domain.com',
+          ...         u'to@domain.com', subject, body, **kwargs)
+          >>> assert isinstance(mail, PMMail)
+          >>> mail.html_body
+          '<p>Boo</p>'
+          >>> mail.text_body
+          'Boo'
+      
+      Any ``kwargs`` passed to the function are passed to the PMMail constructor.
+    """
+    
+    # Compose.
+    if msg_cls is None:
+        msg_cls = PMMail
+    
+    # Prepare.
+    subject_str = subject.encode('utf-8').strip()
+    body_str = body.encode('utf-8').strip()
+    text_str = html2text(body).encode('utf8').strip()
+    
+    return msg_cls(sender=from_address, to=to_address, subject=subject_str,
+            html_body=body_str, text_body=text_str, **kwargs)
+
+def render_email(request, from_address, to_address, subject, template_spec,
+        template_vars={}, factory=None, render_template=None, **kwargs):
+    """Use ``render_email`` to render an email using a template::
+      
+          >>> from mock import Mock
+          >>> mock_render = Mock()
+          >>> mock_render.return_value = '<p>Boo</p>'
+          >>> mock_request = None
+          >>> subject = u'Subject Line'
+          >>> template_spec = 'pyramid_postmark:fixtures/example.mako'
+          >>> template_vars = {'msg': u'Boo'}
+          >>> kwargs = {}
+          >>> mail = render_email(mock_request, u'from@domain.com',
+          ...         u'to@domain.com', subject, template_spec, template_vars,
+          ...         render_template=mock_render, **kwargs)
+          >>> mail.html_body
+          '<p>Boo</p>'
+          >>> mock_render.assert_called_with(template_spec, template_vars,
+          ...         request=mock_request)
+      
+      Any ``kwargs`` passed to the function are passed to the PMMail constructor.
+    """
+    
+    # Compose.
+    if factory is None:
+        factory = email_factory
+    if render_template is None:
+        render_template = renderers_render_template
+    
+    # Use the template to generate the email body.
+    body = render_template(template_spec, template_vars, request=request)
+    
+    # Use the factory to return an email.
+    return factory(request, from_address, to_address, subject, body, **kwargs)
+
 
 def get_mailer(request, mailer_factory=None):
     """Return a configured ``PMBatchMail`` instance.
@@ -33,7 +112,7 @@ def get_mailer(request, mailer_factory=None):
       
     """
     
-    # Test jig.
+    # Compose.
     if mailer_factory is None: # pragma: no cover
         mailer_factory = PMBatchMail
     
@@ -43,8 +122,8 @@ def get_mailer(request, mailer_factory=None):
     
     return mailer_factory(api_key=api_key)
 
-def get_send_email(request, get_batch_mailer=None, join_to_transaction=None,
-        thread_cls=None):
+def send_email(request, get_batch_mailer=None, join_to_transaction=None,
+          thread_cls=None):
     """Provides a function to send one or more emails.
       
       Setup::
@@ -94,7 +173,7 @@ def get_send_email(request, get_batch_mailer=None, join_to_transaction=None,
       
     """
     
-    # Test jig.
+    # Compose.
     if get_batch_mailer is None: # pragma: no cover
         get_batch_mailer = get_mailer
     if join_to_transaction is None: # pragma: no cover
@@ -131,3 +210,6 @@ def get_send_email(request, get_batch_mailer=None, join_to_transaction=None,
     # Return the function.
     return send_email
 
+
+# Backwards compatibility.
+get_send_email = send_email

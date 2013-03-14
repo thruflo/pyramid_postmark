@@ -43,6 +43,7 @@ setup(
         'pyramid',
         'pyramid_tm',
         'pyramid_weblayer',
-        'python-postmark'
+        'python-postmark',
+        'html2text'
     ]
 )
