@@ -1,9 +1,17 @@
 [pyramid_postmark][] is a package that integrates the [Postmark][] email sending
-service with a [Pyramid][] web application.  It's a very thin layer around the
-[python-postmark][] library that provides:
+service with a [Pyramid][] web application. For example, to send an email using
+a template:
+
+    spec = 'mypackage:templates/newsletter.tmpl'
+    email = request.render_email('a@b.com', 'b@c.com', 'Subject', spec)
+    request.send_email(email)
+
+It's a very thin layer around the [python-postmark][] library that provides:
 
 * `request.mailer`, a configured `postmark.PMBatchMail` instance
 * `request.send_email` a function to send one or more email messages
+* `request.email_factory` to instantiate an email message
+* `request.render_email` to instantiate an email using a template
 
 These are integrated by default with the [pyramid_tm][] transaction machinery, so
 emails are only sent if the current request is successful.
@@ -26,19 +34,32 @@ Include the package in the configuration portion of your Pyramid app:
 
 # Use
 
-You can then send an email like this:
+Generate an email using the postmark library directly:
 
-    # E.g.: in a view callable / anywhere where you're handling a `request`.
     from postmark import PMMail
     email = PMMail(sender='a@b.com', to='b@c.com', subject='Subject', 
-            html_body='<p>Body</p>', text_body='Body')
+            html_body='<p>Boo</p>', text_body='Boo')
+
+Or use the factory provided:
+
+    # E.g.: in a view callable / anywhere where you're handling a `request`.
+    email = request.email_factory('a@b.com', 'b@c.com', 'Subject', '<p>Boo</p>')
+
+Or use a template:
+
+    spec = 'mypackage:templates/mytemplate.tmpl'
+    data = {'msg': 'Boo'} # <-- passed as variables to the template
+    email = request.render_email('a@b.com', 'b@c.com', 'Subject', spec, data)
+
+Then send the email like this:
+
     request.send_email(email)
 
-Or send multiple emails:
+Send multiple emails:
 
     request.send_email([email, email])
 
-Or use the batch mailer directly:
+Use the batch mailer directly:
 
     request.mailer.messages = [email]
     request.mailer.send()
