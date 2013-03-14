@@ -49,13 +49,17 @@ def email_factory(request, from_address, to_address, subject, body,
     if msg_cls is None:
         msg_cls = PMMail
     
+    # Unpack.
+    settings = request.registry.settings
+    api_key = settings.get('postmark.api_key')
+    
     # Prepare.
     subject_str = subject.encode('utf-8').strip()
     body_str = body.encode('utf-8').strip()
     text_str = html2text(body).encode('utf8').strip()
     
-    return msg_cls(sender=from_address, to=to_address, subject=subject_str,
-            html_body=body_str, text_body=text_str, **kwargs)
+    return msg_cls(api_key=api_key, sender=from_address, to=to_address,
+            subject=subject_str, html_body=body_str, text_body=text_str, **kwargs)
 
 def render_email(request, from_address, to_address, subject, template_spec,
         template_vars={}, factory=None, render_template=None, **kwargs):

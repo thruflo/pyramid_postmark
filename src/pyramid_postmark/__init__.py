@@ -25,5 +25,5 @@ def includeme(config):
     config.add_request_method(email_factory, 'email_factory')
     config.add_request_method(get_mailer, 'mailer', reify=True)
     config.add_request_method(render_email, 'render_email')
-    config.add_request_method(send_email, 'send_email')
+    config.add_request_method(send_email, 'send_email', reify=True)
 
