@@ -1,4 +1,8 @@
 
+# 0.3.1
+
+Bugfix.
+
 # 0.3
 
 Refactor slightly to use `config.add_request_method`.  Provide two new request hooks:

@@ -14,7 +14,7 @@ def _read(file_name):
 
 setup(
     name = 'pyramid_postmark',
-    version = '0.3',
+    version = '0.3.1',
     description = 'Integrate the Postmark email service with a Pyramid web application.',
     author = 'James Arthur',
     author_email = 'username: thruflo, domain: gmail.com',
